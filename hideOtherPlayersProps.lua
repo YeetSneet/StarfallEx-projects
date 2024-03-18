@@ -1,5 +1,5 @@
 --@name render only my and world entitys
---@author
+--@author yeet_sneet
 --@client
 
 if player() ~= owner() then return end
@@ -22,6 +22,15 @@ local testq = findEnts()
 
 local world = game.getWorld()
 pertick = pertick-1
+
+hook.add("NetworkEntityCreated", "add2", function (ent) 
+    if ent==nil or not ent:isValid() then return end
+    local own = ent:getOwner()
+    if own~=nil and own~=owner() and own~=world then
+        table.insert(testq, ent)
+    end
+end)
+
 hook.add("OnEntityCreated", "add", function (ent) 
     if ent==nil or not ent:isValid() then return end
     local own = ent:getOwner()
@@ -58,9 +67,14 @@ hook.add("inputPressed", "control", function (key)
         print("Reverting...") 
         
         hook.remove("OnEntityCreated", "add")
+        hook.remove("NetworkEntityCreated", "add2")
         hook.remove("think", "hide")
         hook.remove("inputReleased", "control")
         hook.remove("inputPressed", "control")
+        
+        if keys[79] then -- lshift
+            hidEnts = findEnts() 
+        end
         
         hook.add("think", "show", function () 
             local len = #hidEnts
