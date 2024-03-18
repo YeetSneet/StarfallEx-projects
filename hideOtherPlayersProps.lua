@@ -66,13 +66,16 @@ hook.add("inputPressed", "control", function (key)
     if keys[66] and keys[64] then -- backspace enter
         print("Reverting...") 
         
+        hook.remove("think", "hide")
+        
         hook.remove("OnEntityCreated", "add")
         hook.remove("NetworkEntityCreated", "add2")
-        hook.remove("think", "hide")
+        
         hook.remove("inputReleased", "control")
         hook.remove("inputPressed", "control")
         
-        if keys[79] then -- lshift
+        if keys[79] then -- lshift -- should ownly use if removed chip before reverting
+            print("showing all ents")
             hidEnts = findEnts() 
         end
         
