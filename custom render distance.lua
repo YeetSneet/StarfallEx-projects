@@ -47,14 +47,14 @@ local Op = owner():getPos()
 
 local function Inlist(List, data)
     for _, v in pairs(List) do
-        if data == v then return false end
+        if data == v then return true end
     end
-    return true
+    return false
 end
 
 local function validTarget(ent)
     -- if you flip the output of Inlist you can make a whitelist or a blacklist
-    return ent:entIndex() ~= -1 and (ent:isWeapon() or not Inlist(ClassesList, ent:getClass()))
+    return ent:entIndex() ~= -1 and (ent:isWeapon() or Inlist(ClassesList, ent:getClass()))
 end
 
 local function getAllEnts() 
@@ -132,3 +132,5 @@ hook.add("drawhud", "display Text", function ()
     render.drawSimpleText(TEXTX, TEXTY, RenderDist)
     
 end)
+
+
