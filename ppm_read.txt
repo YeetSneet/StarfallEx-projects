@@ -3,6 +3,8 @@
 --@shared
 
 if SERVER then
+    
+    
     local cp = chip():getPos()
     local ScreenEnt = prop.createSent(cp+Vector(0,0,65), Angle(90,-90,0), "gmod_wire_digitalscreen", true, {Model="models/hunter/plates/plate2x2.mdl"})
     local ScreenWL = wire.getWirelink(ScreenEnt)
@@ -39,6 +41,8 @@ if SERVER then
         ProgressDisplayWL["A"] = math.floor((idx/MaxIdx)*100)
         if idx == MaxIdx then
             ProgressDisplay:remove()
+            prop.setPropClean(false)
+            chip():remove()
             timer.remove("updateProgressDisplay")
         end
     end)
@@ -88,7 +92,7 @@ function readPPM(filename)
     return width, height, DATASTRING
 end
 
-local filename = "kitten.ppm"
+local filename = "kitten.ppm" -- local to GarrysMod\garrysmod\data\sf_filedata\
 width, height, data = readPPM(filename)
 
 net.start("init")
@@ -98,7 +102,7 @@ net.send()
 
 local maxIdx = #data
 local idx = 1
-hook.add("tick", "sendData", function () 
+hook.add("think", "sendData", function () 
     local bl = net.getBytesLeft()-11
     if bl>0 then
         if idx+bl > maxIdx then
@@ -119,12 +123,3 @@ hook.add("tick", "sendData", function ()
         end
     end
 end)
-
-
-
-
-
-
-
-
-
