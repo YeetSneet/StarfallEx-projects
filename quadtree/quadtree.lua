@@ -30,11 +30,13 @@ function quadtree.create(initData, width, height, homogeneousFunc, maxcpu)
             local x, y, w, h = stack[stacklen], stack[stacklen-1], stack[stacklen-2], stack[stacklen-3]
             
             if w == 1 and h == 1 then
+                stack[stacklen]=nil;stack[stacklen-1]=nil;stack[stacklen-2]=nil;stack[stacklen-3]=nil;
                 stacklen = stacklen - 4
                 self.leafLen = insert(leafArray, {x, y, w, h, initData[x + y * width + 1]})
             else
                 local isHomogeneous, value = homogeneousFunc(initData, x, y, w, h, width)
                 if isHomogeneous then 
+                    stack[stacklen]=nil;stack[stacklen-1]=nil;stack[stacklen-2]=nil;stack[stacklen-3]=nil;
                     stacklen = stacklen - 4
                     self.leafLen = insert(leafArray, {x, y, w, h, value})
                 else
@@ -50,12 +52,7 @@ function quadtree.create(initData, width, height, homogeneousFunc, maxcpu)
             end
         end
         
-        if stacklen<=0 then
-            stack = nil
-            return true
-        else
-            return false
-        end 
+        return stacklen<=0
     end
     return obj
 end
