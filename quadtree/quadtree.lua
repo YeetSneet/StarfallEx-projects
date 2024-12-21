@@ -14,7 +14,7 @@ function quadtree.create(initData, width, height, homogeneousFunc, maxcpu)
     
     local obj = {
         leafArray = leafArray,
-        leafLen = leafLen
+        leafLen = 0
     }
     
     stack[1] = height
