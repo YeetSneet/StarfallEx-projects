@@ -1,5 +1,4 @@
 --@name quadtree test
---@shared
 --@include Quadtree.txt
 --@client
 --@owneronly
