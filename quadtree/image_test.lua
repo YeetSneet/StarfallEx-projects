@@ -1,7 +1,7 @@
 --@name quadtree test
---@include Quadtree.txt
 --@client
 --@owneronly
+--@include Quadtree.txt
 
 
 local fileName = "splash.ppm"
