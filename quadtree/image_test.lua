@@ -48,7 +48,8 @@ local function RGBN2RGB(num)
     return (num / 65536) % 256, (num / 256) % 256, num % 256
 end
 
-local function homogeneous(initData, sx, sy, w, h, totalWidth)
+--[[
+local function homogeneous(initData, sx, sy, w, h, totalWidth) -- built for speed
     local ov = initData[sx + sy * totalWidth + 1]
     local r, g, b = (ov / 65536) % 256, (ov / 256) % 256, ov % 256
     local sqrt = math.sqrt
@@ -56,13 +57,42 @@ local function homogeneous(initData, sx, sy, w, h, totalWidth)
         local offset = y * totalWidth + 1
         for x = sx, sx + w - 1 do
             local v = initData[x + offset]
-            if v ~= ov and sqrt((r - (v / 65536) % 256) ^ 2 + (g - (v / 256) % 256) ^ 2 + (b - v % 256) ^ 2) > 25 then
+            if v ~= ov and sqrt((r - (v / 65536) % 256) ^ 2 + (g - (v / 256) % 256) ^ 2 + (b - v % 256) ^ 2) > ((15)) then -- change number in (()) to change its tolerance. higher is more tolerant
                 return false
             end
         end
     end
     return true, ov
 end
+--]]
+
+--[
+local function homogeneous(initData, sx, sy, w, h, totalWidth) -- built for looks
+    local ov = initData[sx + sy * totalWidth + 1]
+    local r, g, b = (ov / 65536) % 256, (ov / 256) % 256, ov % 256
+    
+    local sqrt, round = math.sqrt, math.round
+    local pixelCount = 0
+    for y = sy, sy + h - 1 do
+        for x = sx, sx + w - 1 do
+            local v = initData[x + y * totalWidth + 1]
+            local r2, g2, b2 = (v / 65536) % 256, (v / 256) % 256, v % 256
+                if sqrt( (r-r2)^2 +(g-g2)^2 + (b-b2)^2) > ((15)) then -- change number in (()) to change its tolerance. higher is more tolerant
+                return false
+            end
+            
+            pixelCount = pixelCount + 1
+            r = r + (r2 - r) / pixelCount
+            g = g + (g2 - g) / pixelCount
+            b = b + (b2 - b) / pixelCount
+        end
+    end
+    
+    
+    return true, (round(r)*65536 + round(g)*256 + round(b))
+end--]]
+
+
 
 local function readPPM(filename)
     local file = file.open(filename, "rb")
@@ -172,8 +202,10 @@ hook.add("PlayerChat", "chat_commands", function(ply, text)
     if cmd == ".debug" then
         RenderMode = tonumber(args[1]) + 1 or RenderMode
         part2()
+        return true
     elseif cmd == ".redraw" then
         part2()
+        return true
     end
 end)
 
