@@ -51,10 +51,9 @@ function movement.walkPath(path, camera)
     
     if camera ~= false then
         local ang = player():getEyeAngles()
-        local sens = convar.getFloat("sensitivity")
         enableHud(owner(), true)
         hook.add("MouseMoved", "cameraControl", function (x, y) 
-            ang = ang + Angle(y,-x,0)*sens/45.4545
+            ang = ang + Angle(y,-x,0)/45.4545
         end)
         hook.add("calcview", "camera", function (pos)
             return {
