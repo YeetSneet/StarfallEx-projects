@@ -4,21 +4,14 @@
 --@include pathgen_lib.txt
 
 require("pathgen_lib.txt")
+pathgen.startProcessingJobs(cpuMax()*0.1)
 
 if player() ~= owner() or SERVER then return end
-
 
 local movement = {}
 function movement.stop()
     concmd("-moveright;-moveleft;-back;-forward;-speed;-left;-right;-walk;-jump")
 end
-
-hook.add("removed", "movement-stop", movement.stop)
-hook.add("StarfallError", "movement-stop", function(chip)
-    if chip == chip() then 
-        movement.stop()
-    end
-end)
 
 function movement.moveToPos(pos, speed) 
     local dir = (dir-player():getEyeAngles()[2]) % 360
@@ -46,7 +39,6 @@ function movement.moveDir(dir, speed)
 end
 
 function movement.walkPath(path, camera)
-        
     local nextPointHolo = hologram.create(Vector(), Angle(), "models/props_junk/propane_tank001a.mdl")
     local pathLen = #path
     
@@ -139,9 +131,16 @@ function movement.walkTo(targetPos, res, camera)
         }
     )
 end
-    
-local holo = hologram.create(Vector(), Angle(), "models/props_junk/propane_tank001a.mdl")
 
+
+hook.add("removed", "movement-stop", movement.stop)
+hook.add("StarfallError", "movement-stop", function(chip)
+    if chip == chip() then 
+        movement.stop()
+    end
+end)
+ 
+local holo = hologram.create(Vector(), Angle(), "models/props_junk/propane_tank001a.mdl")
 
 print("press insert to auto walk to chip")
 hook.add("InputPressed", "start", function (key) 
