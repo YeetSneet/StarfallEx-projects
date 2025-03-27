@@ -1,0 +1,72 @@
+--@name window example
+--@author yeet_sneet
+--@client
+--@owneronly
+--@include window.txt
+
+require("window.txt")
+
+local GameResx, GameResy = render.getGameResolution()
+
+local win
+do
+    local rx, ry = 0, 0
+    local res = math.min(GameResx, GameResy)
+    if GameResx > GameResy then
+        rx = (GameResx - GameResy)/2
+    elseif GameResy > GameResx then
+        ry = (GameResy - GameResx)/2
+    end
+    -- name, x, y, w, h, cputime, frametime
+    win = window.create("test", rx, ry, res, res, 1/500, nil)
+end
+
+enableHud(owner(), true)
+
+hook.add("DrawHUD", "display", function () 
+    win:render()
+end)
+
+hook.add("PreDrawHUD", "draw", function () 
+    win:draw() 
+end)
+
+
+do
+    -- x, y, w, h, size
+    local obj = {0, 0, 10, 10, 1024/10, 0, 0}
+    function obj:draw(win)
+        local y, w, h, size, xoff, yoff = self[2], self[3], self[4], self[5]
+        local setRGBA = render.setRGBA
+        local drawRect = render.drawRect
+        for x = self[1], w do
+            for y = y, h do
+                setRGBA((x/w)*255, (y/h)*255, (1-(x/w)*(y/h))*255) 
+                drawRect((x-1)*size,  (y-1)*size, size, size)
+                
+                if not win:CPUCheck() then
+                    self[1], self[2] = x, y+1
+                    return true
+                end
+            end
+            y = 1
+        end
+        
+        render.setRGBA(255,255,255) 
+        render.drawText(0, 16, string.format("size : (%.f, %.f)", w, h))
+        self[1], self[2] = 1, 1
+    end
+    
+    
+    hook.add("MouseWheeled", "ff", function (delta) 
+        if input.isKeyDown(KEY.LSHIFT) then
+            obj[3] = math.clamp(obj[3]+delta, 1, 200)
+        end
+        if input.isKeyDown(KEY.LCONTROL) then
+            obj[4] = math.clamp(obj[4]+delta, 1, 200)
+        end
+        obj[5] = 1024/math.max(obj[3], obj[4])
+    end)
+    
+    win:addObj(obj)
+end
