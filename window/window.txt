@@ -1,0 +1,185 @@
+--@name window
+--@author yeet_sneet
+--@client
+window = {}
+
+function window.create(id, x, y, w, h, cpuMax, frameRateLimit, renderTarget1, renderTarget2)
+    local obj = {
+        x = x,
+        y = y,
+        w = w,
+        h = h,
+        cpuMax = cpuMax,
+        currentDrawingTarget = false,
+        renderTarget1 = renderTarget1 or id .. string.char(0),
+        renderTarget2 = renderTarget2 or id .. string.char(255),
+        elementsCount = 0,
+        elements = {},
+        frameStartTime = timer.realtime(),
+        frameTime = 0,
+        frameLimiter = (frameRateLimit~=nil and (1 / frameRateLimit) or 0)
+    }
+    
+    if not render.renderTargetExists(obj.renderTarget1) then
+        render.createRenderTarget(obj.renderTarget1)
+    end
+    
+    if not render.renderTargetExists(obj.renderTarget2) then
+        render.createRenderTarget(obj.renderTarget2)
+    end
+
+    function obj:setFPSLimit(fps)
+        self.frameLimiter = (fps~=nil and (1 / fps) or 0)
+    end
+
+    function obj:addObj(object)
+        -- Find the first available slot (nil entry)
+        local elements = self.elements
+        local elementsCount = self.elementsCount
+        for i = 1, elementsCount do
+            if elements[i] == nil then
+                elements[i] = object
+                return i
+            end
+        end
+    
+        -- If no gap found, insert at the next available index
+        local idx = elementsCount + 1
+        self.elements[idx] = object
+        self.elementsCount = idx
+        return idx
+    end
+
+    function obj:addObjs(objects)
+        local indices = {}
+        for i, obj in ipairs(objects) do
+            indices[i] = self:addObj(obj)
+        end
+        return indices
+    end
+
+    function obj:getObj(idx)
+        return self.elements[idx]
+    end
+
+    function obj:getObjs(indices)
+        local results = {}
+        for _, idx in ipairs(indices) do
+            table.insert(results, self:getObj(idx))
+        end
+        return results
+    end
+
+    function obj:removeObj(idx)
+        if idx == self.elementsCount then
+            self.elementsCount = self.elementsCount - 1
+        end
+        self.elements[idx] = nil
+    end
+
+    function obj:removeObjs(indices)
+        for _, idx in ipairs(indices) do
+            self:removeObj(idx)
+        end
+    end
+
+    function obj:isOnScreen(x, y)
+        return x >= 0 and x <= 1024 and y >= 0 and y <= 1024
+    end
+
+    function obj:screenToWin(x, y)
+        local winX = ((x - self.x) / self.w) * 1024
+        local winY = ((y - self.y) / self.h) * 1024
+        return { winX, winY, (winX >= 0 and winX <= 1024 and winY >= 0 and winY <= 1024) }
+    end
+
+    function obj:posToWin(pos)
+        local screenPos = pos:toScreen()
+        return self:screenToWin(screenPos.x, screenPos.y)
+    end
+
+    function obj:selectRenderTarget()
+        render.selectRenderTarget(self.currentDrawingTarget and self.renderTarget1 or self.renderTarget2)
+    end
+
+    function obj:setRenderTargetTexture()
+        render.setRenderTargetTexture(self.currentDrawingTarget and self.renderTarget2 or self.renderTarget1)
+    end
+
+    function obj:nextFrame()
+        local fps = self:FPS()
+        fps = fps > 10 and math.round(fps) or math.round(fps, 1)
+        render.setRGBA(255,255,255,255)
+        render.drawText(0, 0, "fps: "..fps) 
+        
+        self:selectRenderTarget()
+        render.clear(Color(255, 255, 255, 0))
+    end
+
+    function obj:CPUCheck()
+        return cpuUsed() < self.cpuMax
+    end
+    
+    local renderQueueLen = 0
+    local renderQueue = {}
+    function obj:draw()
+        self:selectRenderTarget()
+
+        local maxCpuTime = self.cpuMax + cpuUsed()
+        while cpuUsed() < maxCpuTime do
+            if renderQueueLen <= 0 then
+                local realtime = timer.realtime()
+                local frameElapsed = realtime - self.frameStartTime
+                if frameElapsed <= self.frameLimiter then break end
+
+                self.frameTime = frameElapsed
+                self.frameStartTime = realtime
+                
+                do
+                    local elements = self.elements
+                    local len = #elements
+                    for i=1, len do
+                        renderQueue[i] = elements[i]
+                    end
+                    renderQueueLen = len
+                end
+                
+                self.currentDrawingTarget = not self.currentDrawingTarget
+                self:nextFrame()
+            end 
+            
+            local obj = renderQueue[renderQueueLen]
+    
+            if obj==nil or obj.disabled == true then
+                renderQueueLen = renderQueueLen - 1
+            else
+                if obj:draw(self) ~= true then
+                    renderQueueLen = renderQueueLen - 1
+                    local children = obj.children
+                    if children then
+                        local childrenLen = #children
+                        for i=1, childrenLen do
+                            renderQueue[renderQueueLen+i] = children[i]
+                        end
+                        renderQueueLen = renderQueueLen + childrenLen
+                    end
+                else
+                    break
+                end
+            end
+        end
+    end
+
+    function obj:render()
+        render.setRGBA(255, 255, 255, 255)
+        self:setRenderTargetTexture()
+        render.drawTexturedRect(self.x, self.y, self.w, self.h)
+    end
+
+    function obj:FPS()
+        return 1 / self.frameTime
+    end
+
+    return obj
+end
+
