@@ -42,7 +42,7 @@ do
         for x = self[1], w do
             for y = y, h do
                 setRGBA((x/w)*255, (y/h)*255, (1-(x/w)*(y/h))*255) 
-                drawRect((x-1)*size,  (y-1)*size, size, size)
+                drawRect((x-1)*size,  (y-1)*size, size-1, size-1)
                 
                 if not win:CPUCheck() then
                     self[1], self[2] = x, y+1
@@ -52,6 +52,8 @@ do
             y = 1
         end
         
+        render.setRGBA(0,0,0, 250)
+        render.drawRect(0, 0, 100, 40)
         render.setRGBA(255,255,255) 
         render.drawText(0, 16, string.format("size : (%.f, %.f)", w, h))
         self[1], self[2] = 1, 1
@@ -70,3 +72,7 @@ do
     
     win:addObj(obj)
 end
+
+
+
+
